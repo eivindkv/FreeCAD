@@ -374,7 +374,7 @@ void ViewProviderMesh::onChanged(const App::Property* prop)
             setOpenEdgeColorFrom(ShapeColor.getValue());
         }
         else if (prop == &ShapeMaterial) {
-            setOpenEdgeColorFrom(ShapeMaterial.getValue().diffuseColor);
+            setOpenEdgeColorFrom(ShapeMaterial.getValue()->getDiffuseColor());
         }
     }
 
