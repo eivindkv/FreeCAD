@@ -2755,7 +2755,10 @@ void PropertyMaterial::Restore(Base::XMLReader &reader)
     reader.readElement("PropertyMaterial");
     // get the value of my Attribute
     aboutToSetValue();
-    _Name = reader.getAttribute("name");
+    if (reader.hasAttribute("name"))
+        _Name = reader.getAttribute("name");
+    else
+        _Name = "Unknown";
     _cMat = 0;
     hasSetValue();
 }

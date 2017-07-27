@@ -374,26 +374,30 @@ void ViewProviderPartExt::onChanged(const App::Property* prop)
     else if (prop == &LineMaterial) {
         const App::Material * Mat = LineMaterial.getValue();
 
-        if (Mat && LineColor.getValue() != Mat->getDiffuseColor())
-            LineColor.setValue(Mat->getDiffuseColor());
-        pcLineMaterial->ambientColor.setValue(Mat->getAmbientColor().r,Mat->getAmbientColor().g,Mat->getAmbientColor().b);
-        pcLineMaterial->diffuseColor.setValue(Mat->getDiffuseColor().r,Mat->getDiffuseColor().g,Mat->getDiffuseColor().b);
-        pcLineMaterial->specularColor.setValue(Mat->getSpecularColor().r,Mat->getSpecularColor().g,Mat->getSpecularColor().b);
-        pcLineMaterial->emissiveColor.setValue(Mat->getEmissiveColor().r,Mat->getEmissiveColor().g,Mat->getEmissiveColor().b);
-        pcLineMaterial->shininess.setValue(Mat->getShininess());
-        pcLineMaterial->transparency.setValue(Mat->getTransparency());
+        if (Mat) {
+            if (LineColor.getValue() != Mat->getDiffuseColor())
+                LineColor.setValue(Mat->getDiffuseColor());
+            pcLineMaterial->ambientColor.setValue(Mat->getAmbientColor().r,Mat->getAmbientColor().g,Mat->getAmbientColor().b);
+            pcLineMaterial->diffuseColor.setValue(Mat->getDiffuseColor().r,Mat->getDiffuseColor().g,Mat->getDiffuseColor().b);
+            pcLineMaterial->specularColor.setValue(Mat->getSpecularColor().r,Mat->getSpecularColor().g,Mat->getSpecularColor().b);
+            pcLineMaterial->emissiveColor.setValue(Mat->getEmissiveColor().r,Mat->getEmissiveColor().g,Mat->getEmissiveColor().b);
+            pcLineMaterial->shininess.setValue(Mat->getShininess());
+            pcLineMaterial->transparency.setValue(Mat->getTransparency());
+        }
     }
     else if (prop == &PointMaterial) {
         const App::Material * Mat = PointMaterial.getValue();
 
-        if (Mat && PointColor.getValue() != Mat->getDiffuseColor())
-            PointColor.setValue(Mat->getDiffuseColor());
-        pcPointMaterial->ambientColor.setValue(Mat->getAmbientColor().r,Mat->getAmbientColor().g,Mat->getAmbientColor().b);
-        pcPointMaterial->diffuseColor.setValue(Mat->getDiffuseColor().r,Mat->getDiffuseColor().g,Mat->getDiffuseColor().b);
-        pcPointMaterial->specularColor.setValue(Mat->getSpecularColor().r,Mat->getSpecularColor().g,Mat->getSpecularColor().b);
-        pcPointMaterial->emissiveColor.setValue(Mat->getEmissiveColor().r,Mat->getEmissiveColor().g,Mat->getEmissiveColor().b);
-        pcPointMaterial->shininess.setValue(Mat->getShininess());
-        pcPointMaterial->transparency.setValue(Mat->getTransparency());
+        if (Mat) {
+            if (PointColor.getValue() != Mat->getDiffuseColor())
+                PointColor.setValue(Mat->getDiffuseColor());
+            pcPointMaterial->ambientColor.setValue(Mat->getAmbientColor().r,Mat->getAmbientColor().g,Mat->getAmbientColor().b);
+            pcPointMaterial->diffuseColor.setValue(Mat->getDiffuseColor().r,Mat->getDiffuseColor().g,Mat->getDiffuseColor().b);
+            pcPointMaterial->specularColor.setValue(Mat->getSpecularColor().r,Mat->getSpecularColor().g,Mat->getSpecularColor().b);
+            pcPointMaterial->emissiveColor.setValue(Mat->getEmissiveColor().r,Mat->getEmissiveColor().g,Mat->getEmissiveColor().b);
+            pcPointMaterial->shininess.setValue(Mat->getShininess());
+            pcPointMaterial->transparency.setValue(Mat->getTransparency());
+        }
     }
     else if (prop == &PointColorArray) {
         setHighlightedPoints(PointColorArray.getValues());
