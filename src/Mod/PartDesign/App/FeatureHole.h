@@ -65,6 +65,7 @@ public:
     App::PropertyAngle          DrillPointAngle;
     App::PropertyBool           Tapered;
     App::PropertyAngle          TaperedAngle;
+    App::PropertyLength         TopClearance;
 
     /** @name methods override feature */
     //@{

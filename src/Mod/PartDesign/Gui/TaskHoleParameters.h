@@ -78,6 +78,7 @@ public:
     Base::Quantity getDrillPointAngle() const;
     bool   getTapered() const;
     Base::Quantity getTaperedAngle() const;
+    Base::Quantity getTopClearance() const;
 
 private Q_SLOTS:
     void threadedChanged();
@@ -101,7 +102,8 @@ private Q_SLOTS:
     void drillPointChanged();
     void drillPointAngledValueChanged(double value);
     void taperedChanged();
-    void taperedAngleChanged(double value);   
+    void taperedAngleChanged(double value);
+    void topClearanceChanged(double value);
 private:
     class Observer : public App::DocumentObserver {
     public:

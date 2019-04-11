@@ -488,6 +488,8 @@ Hole::Hole()
     ADD_PROPERTY_TYPE(Tapered, ((bool)false),"Hole",  App::Prop_None, "Tapered");
     
     ADD_PROPERTY_TYPE(TaperedAngle, (90.0), "Hole", App::Prop_None, "Tapered angle");
+    
+    ADD_PROPERTY_TYPE(TopClearance, (0.0), "Hole", App::Prop_None, "Top clearance");
 }
 
 void Hole::updateHoleCutParams()
@@ -893,7 +895,8 @@ short Hole::mustExecute() const
          DrillPoint.isTouched() ||
          DrillPointAngle.isTouched() ||
          Tapered.isTouched() ||
-         TaperedAngle.isTouched() )
+         TaperedAngle.isTouched() ||
+         TopClearance.isTouched() )
         return 1;
     return ProfileBased::mustExecute();
 }
@@ -929,6 +932,7 @@ void Hole::updateProps()
     onChanged(&DrillPointAngle);
     onChanged(&Tapered);
     onChanged(&TaperedAngle);
+    onChanged(&TopClearance);
 }
 
 static gp_Pnt toPnt(gp_Vec dir)
@@ -1021,10 +1025,11 @@ App::DocumentObjectExecReturn *Hole::execute(void)
         double radiusBottom = Diameter.getValue() / 2.0 - length * cos( hasTaperedAngle );
         double radius = Diameter.getValue() / 2.0;
         double holeCutRadius = HoleCutDiameter.getValue() / 2.0;
+        double topClearance = TopClearance.getValue();
         gp_Pnt firstPoint(0, 0, 0);
         gp_Pnt lastPoint(0, 0, 0);
         double length1 = 0;
-
+        
         if ( hasTaperedAngle <= 0 || hasTaperedAngle > Base::toRadians( 180.0 ) )
             return new App::DocumentObjectExecReturn("Hole: Invalid taper angle.");
 
@@ -1043,11 +1048,17 @@ App::DocumentObjectExecReturn *Hole::execute(void)
             mkWire.Add( BRepBuilderAPI_MakeEdge(lastPoint, newPoint) );
             lastPoint = newPoint;
 
-            computeIntersection(gp_Pnt( holeCutRadius, 0, 0 ),
-                                gp_Pnt( holeCutRadius - sin( countersinkAngle ), -cos( countersinkAngle ), 0 ),
-                                gp_Pnt( radius, 0, 0 ),
-                                gp_Pnt( radiusBottom, -length, 0), x, z );
-            if (-length > z)
+            if (topClearance > 0) {
+                newPoint = toPnt(holeCutRadius * xDir - zDir * topClearance);
+                mkWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, newPoint));
+                lastPoint = newPoint;
+            }
+            
+            computeIntersection(gp_Pnt( holeCutRadius, -topClearance, 0 ),
+                                gp_Pnt( holeCutRadius - sin( countersinkAngle ), -(cos( countersinkAngle ) + topClearance), 0 ),
+                                gp_Pnt( radius, -topClearance, 0 ),
+                                gp_Pnt( radiusBottom, -(length + topClearance), 0), x, z );
+            if (-(length + topClearance) > z)
                 return new App::DocumentObjectExecReturn("Hole: Invalid countersink.");
 
             length1 = z;
@@ -1074,16 +1085,22 @@ App::DocumentObjectExecReturn *Hole::execute(void)
             mkWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, newPoint));
             lastPoint = newPoint;
 
+            if (topClearance > 0) {
+                newPoint = toPnt(holeCutRadius * xDir - zDir * topClearance);
+                mkWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, newPoint));
+                lastPoint = newPoint;
+            }
+            
             // Bottom of counterbore
-            newPoint = toPnt(holeCutRadius * xDir -holeCutDepth * zDir);
+            newPoint = toPnt(holeCutRadius * xDir -(holeCutDepth + topClearance) * zDir);
             mkWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, newPoint));
             lastPoint = newPoint;
 
             // Compute intersection of tapered edge and line at bottom of counterbore hole
-            computeIntersection(gp_Pnt( 0, -holeCutDepth, 0 ),
-                                gp_Pnt( holeCutRadius, -holeCutDepth, 0 ),
-                                gp_Pnt( radius, 0, 0 ),
-                                gp_Pnt( radiusBottom, length, 0 ), x, z );
+            computeIntersection(gp_Pnt( 0, -(holeCutDepth + topClearance), 0 ),
+                                gp_Pnt( holeCutRadius, -(holeCutDepth + topClearance), 0 ),
+                                gp_Pnt( radius, -topClearance, 0 ),
+                                gp_Pnt( radiusBottom, -(length + topClearance), 0 ), x, z );
 
             length1 = z;
             newPoint = toPnt(x * xDir + z * zDir);
@@ -1094,16 +1111,22 @@ App::DocumentObjectExecReturn *Hole::execute(void)
             gp_Pnt newPoint = toPnt(radius * xDir);
             mkWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, newPoint));
             lastPoint = newPoint;
-            length1 = 0;
+            
+            if (topClearance > 0) {
+                newPoint = toPnt(radius * xDir - zDir * topClearance);
+                mkWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, newPoint));
+                lastPoint = newPoint;
+            }
+            length1 = topClearance;
         }
 
         std::string drillPoint = DrillPoint.getValueAsString();
         if (drillPoint == "Flat") {
-            gp_Pnt newPoint = toPnt(radiusBottom * xDir + -length * zDir);
+            gp_Pnt newPoint = toPnt(radiusBottom * xDir + -(length + topClearance) * zDir);
             mkWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, newPoint));
             lastPoint = newPoint;
 
-            newPoint = toPnt(-length * zDir);
+            newPoint = toPnt(-(length + topClearance) * zDir);
             mkWire.Add( BRepBuilderAPI_MakeEdge( lastPoint, newPoint ) );
             lastPoint = newPoint;
         }
@@ -1115,10 +1138,10 @@ App::DocumentObjectExecReturn *Hole::execute(void)
             if ( drillPointAngle <= 0 || drillPointAngle > Base::toRadians( 180.0 ) )
                 return new App::DocumentObjectExecReturn("Hole: Invalid drill point angle.");
 
-            computeIntersection(gp_Pnt( 0, -length, 0 ),
-                                gp_Pnt( cos( drillPointAngle ), -length + sin( drillPointAngle ), 0),
+            computeIntersection(gp_Pnt( 0, -(length + topClearance), 0 ),
+                                gp_Pnt( cos( drillPointAngle ), -(length + topClearance) + sin( drillPointAngle ), 0),
                                 gp_Pnt(radius, 0, 0),
-                                gp_Pnt(radiusBottom, -length, 0), x, z);
+                                gp_Pnt(radiusBottom, -(length + topClearance), 0), x, z);
 
             if (z > 0 || z >= length1)
                 return new App::DocumentObjectExecReturn("Hole: Invalid drill point.");
@@ -1127,7 +1150,7 @@ App::DocumentObjectExecReturn *Hole::execute(void)
             mkWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, newPoint));
             lastPoint = newPoint;
 
-            newPoint = toPnt(-length * zDir);
+            newPoint = toPnt(-(length + topClearance) * zDir);
             mkWire.Add(BRepBuilderAPI_MakeEdge(lastPoint, newPoint));
             lastPoint = newPoint;
         }

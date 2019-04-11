@@ -97,6 +97,7 @@ TaskHoleParameters::TaskHoleParameters(ViewProviderHole *HoleView, QWidget *pare
     connect(ui->DrillPointAngle, SIGNAL(valueChanged(double)), this, SLOT(drillPointAngledValueChanged(double)));
     connect(ui->Tapered, SIGNAL(clicked(bool)), this, SLOT(taperedChanged()));
     connect(ui->TaperedAngle, SIGNAL(valueChanged(double)), this, SLOT(taperedAngleChanged(double)));
+    connect(ui->TopClearance, SIGNAL(valueChanged(double)), this, SLOT(topClearanceChanged(double)));
 
     PartDesign::Hole* pcHole = static_cast<PartDesign::Hole*>(vp->getObject());
 
@@ -114,6 +115,7 @@ TaskHoleParameters::TaskHoleParameters(ViewProviderHole *HoleView, QWidget *pare
     ui->Depth->bind(pcHole->Depth);
     ui->DrillPointAngle->bind(pcHole->DrillPointAngle);
     ui->TaperedAngle->bind(pcHole->TaperedAngle);
+    ui->TopClearance->bind(pcHole->TopClearance);
     
     connectPropChanged = App::GetApplication().signalChangePropertyEditor.connect(boost::bind(&TaskHoleParameters::changedObject, this, _1));
 
@@ -259,6 +261,14 @@ void TaskHoleParameters::taperedAngleChanged(double value)
 
     pcHole->TaperedAngle.setValue(value);
     recomputeFeature();
+}
+
+void TaskHoleParameters::topClearanceChanged(double value)
+{
+    PartDesign::Hole* pcHole = static_cast<PartDesign::Hole*>(vp->getObject());
+
+    pcHole->TopClearance.setValue(value);
+    recomputeFeature();    
 }
 
 void TaskHoleParameters::threadTypeChanged(int index)
@@ -579,6 +589,15 @@ void TaskHoleParameters::changedObject(const App::Property &Prop)
         }
         ui->TaperedAngle->setDisabled(ro);
     }
+    else if (&Prop == &pcHole->TopClearance) {
+        ui->TopClearance->setEnabled(true);
+        if (ui->TopClearance->value().getValue() != pcHole->TopClearance.getValue()) {
+            ui->TopClearance->blockSignals(true);
+            ui->TopClearance->setValue(pcHole->TopClearance.getValue());
+            ui->TopClearance->blockSignals(false);
+        }
+        ui->TopClearance->setDisabled(ro);
+    }
 }
 
 void TaskHoleParameters::onSelectionChanged(const Gui::SelectionChanges& msg)
@@ -688,6 +707,11 @@ Base::Quantity TaskHoleParameters::getTaperedAngle() const
     return ui->TaperedAngle->value();
 }
 
+Base::Quantity TaskHoleParameters::getTopClearance() const
+{
+    return ui->TopClearance->value();
+}
+
 void TaskHoleParameters::apply()
 {
     std::string name = vp->getObject()->getNameInDocument();
@@ -707,6 +731,7 @@ void TaskHoleParameters::apply()
     ui->Depth->apply();
     ui->DrillPointAngle->apply();
     ui->TaperedAngle->apply();
+    ui->TopClearance->apply();
    
     if (!pcHole->Threaded.isReadOnly())
         Gui::Command::doCommand(Gui::Command::Doc,"App.ActiveDocument.%s.Threaded = %u", cname, getThreaded() ? 1 : 0);
